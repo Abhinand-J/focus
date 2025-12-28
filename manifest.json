@@ -1,0 +1,26 @@
+{
+    "manifest_version": 3,
+    "name": "Focus",
+    "version": "0.1",
+    "description": "blocks sites so you can lock in",
+    "icons": {
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    },
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "permissions": [],
+    "content_scripts": [
+        {
+            "js": [
+                "contentScript.js"
+            ],
+            "matches": [
+                "https://*.youtube.com/*",
+                "https://*.instagram.com/*"
+            ],
+            "run_at": "document_end"
+        }
+    ]
+}
