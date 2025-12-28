@@ -10,11 +10,13 @@
     "action": {
         "default_popup": "popup.html"
     },
-    "permissions": [],
+    "permissions": [
+        "tabs"
+    ],
     "content_scripts": [
         {
             "js": [
-                "contentScript.js"
+                "content-script.js"
             ],
             "matches": [
                 "https://*.youtube.com/*",
@@ -22,5 +24,8 @@
             ],
             "run_at": "document_end"
         }
-    ]
+    ],
+    "background": {
+        "service_worker": "service-worker.js"
+    }
 }
