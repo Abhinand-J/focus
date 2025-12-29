@@ -8,40 +8,47 @@ let state = false;
 // map to store blocked tabids & urls
 const map = new Map();
 
+function setState(newState) {
+    state = !!newState;  // if undefined, !! will turn it to false (undef->true->false)
+
+    if (state) {
+        // if block: for each tab: if part of blacklist: add tabid, url to dict; redirect tab to block page
+        chrome.tabs.query({}, (tabs) => {
+            for (const tab of tabs) {
+                if (!tab.id || !tab.url) continue;
+                for (const elem of blockList) {
+                    if (tab.url.includes(elem)) {
+                        map.set(tab.id, tab.url);
+                        chrome.tabs.update(tab.id, {url: chrome.runtime.getURL('blocked.html')});
+                        break;
+                    }
+                }
+            }
+        });
+    } else {
+        // if unblock: for each tabid, url in dict: redirect tab to url
+        for (const [key, val] of map) {
+            chrome.tabs.update(key, {url: val});
+        }
+        map.clear();
+    }
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type == "GET_STATE") {
         sendResponse({value: state});
     }
     if (msg.type == "SET_STATE") {
-        state = msg.value;
-        // this is where i block/unblock existing tabs
-        // if block: for each tab: if part of blacklist: add tabid, url to dict; redirect tab to block page
-        // if unblock: for each tabid, url in dict: redirect tab to url
-        if (state) {
-            chrome.tabs.query({}, (tabs) => {
-                for (const tab of tabs) {
-                    if (!tab.id || !tab.url) continue;
-                    for (const elem of blockList) {
-                        if (tab.url.includes(elem)) {
-                            map.set(tab.id, tab.url);
-                            chrome.tabs.update(tab.id, {url: chrome.runtime.getURL('blocked.html')});
-                            break;
-                        }
-                    }
-                }
-            });
-        } else {
-            for (const [key, val] of map) {
-                chrome.tabs.update(key, {url: val});
-            }
-            map.clear();
-        }
+        setState(msg.value);
     }
-    // popup will send updated list here, which replaces old. currently not implemented by popup so will never be called.
+    if (msg.type == "GET_BLOCKLIST") {
+        sendResponse({value: blockList});
+    }
     // this is not preserved between browser loads. only the initial list hardcoded in block-list.js is.
-    if (msg.type == "UPDATE_BLOCKLIST" && msg.value) {
+    if (msg.type == "SET_BLOCKLIST" && msg.value) {
         console.log("here is where i would update blocklist");
         blockList = msg.value;
+        setState(state);
     }
 });
 
