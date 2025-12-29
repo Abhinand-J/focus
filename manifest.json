@@ -11,21 +11,12 @@
         "default_popup": "popup.html"
     },
     "permissions": [
-        "tabs"
-    ],
-    "content_scripts": [
-        {
-            "js": [
-                "content-script.js"
-            ],
-            "matches": [
-                "https://*.youtube.com/*",
-                "https://*.instagram.com/*"
-            ],
-            "run_at": "document_end"
-        }
+        "tabs",
+        "activeTab",
+        "scripting"
     ],
     "background": {
-        "service_worker": "service-worker.js"
+        "service_worker": "service-worker.js",
+        "type": "module"
     }
 }

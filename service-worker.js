@@ -1,20 +1,26 @@
+import blockList from "./block-list.js";
+
 let state = false;
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    if (msg.type == "CLOSE_ME" && sender.tab?.id) {
-        chrome.tabs.remove(sender.tab.id);
-    }
-    if (msg.type == "BLOCK_EXISTING" && msg.tabs) {
-        const tabs = msg.tabs;
-        console.log(tabs);
-    }
-    if (msg.type == "UNBLOCK_EXISTING" && msg.tabs) {
-        const tabs = msg.tabs;
-    }
     if (msg.type == "GET_STATE") {
         sendResponse({value: state});
     }
     if (msg.type == "SET_STATE") {
         state = msg.value;
+    }
+    if (msg.type == "UPDATE_BLOCKLIST" && msg.value) {
+        console.log("here is where i would update blocklist");
+    }
+});
+
+// call content scripts
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (state && changeInfo.status === "complete") {
+        for (const elem of blockList) {
+            if (tab.url.includes(elem)) {
+                chrome.tabs.remove(tab.id);
+            }
+        }
     }
 });
