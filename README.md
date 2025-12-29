@@ -4,7 +4,12 @@ Current Functionality:
 
 To Do:
 * block existing webpages without deleting them (somehow prevent users from accessing them)
-    * have to either 
+    * exact implementation unsure, but this is known:
+        * popup calls when toggled on.
+        * service worker heeds call and implements existing webpage (needs access to block list).
+        * dynamic content script (thus manifest must be changed).
+
+First Step:
 * allow modification of blacklist through popup
     * this will require changing from static content scripts to dynamic ones (increase in permissions)
-    * think this is less useful anyways so will set aside as a non-integral feature.
+    * integral to blocking existing webpages.

@@ -8,6 +8,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const tabs = msg.tabs;
         console.log(tabs);
     }
+    if (msg.type == "UNBLOCK_EXISTING" && msg.tabs) {
+        const tabs = msg.tabs;
+    }
     if (msg.type == "GET_STATE") {
         sendResponse({value: state});
     }
