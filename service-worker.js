@@ -4,7 +4,7 @@ import blockList from "./block-list.js";
 let state = false;
 
 // map to store blocked tabids & urls
-const map = Map();
+const map = new Map();
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type == "GET_STATE") {
@@ -45,19 +45,31 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 // handles new tab creation. if tab url contains blacklisted strings, removes tab.
 chrome.tabs.onCreated.addListener((tab) => {
-    if (state) {
-        const tabId = tab.id;
+    if (!state || !tab.id) return;
 
-        function handleUpdate(updatedTabId, changeInfo, updatedTab) {
-            if (updatedTabId !== tabId) return;
-            if (changeInfo.url) {
-                // delete
-                for (const elem of blockList) {
-                    if (changeInfo.url.includes(elem)) {
-                        chrome.tabs.remove(tabId);
-                    }
+    const tabId = tab.id;
+
+    if (tab.url) {
+        for (const elem of blockList) {
+            if (tab.url.includes(elem)) {
+                chrome.tabs.remove(tabId);
+                return;
+            }
+        }
+    }
+
+    function handleUpdate(updatedTabId, changeInfo) {
+        if (updatedTabId !== tabId) return; // ignore other tabs
+        if (changeInfo.url) {
+            for (const elem of blockList) {
+                if (changeInfo.url.includes(elem)) {
+                    chrome.tabs.remove(tabId);
+                    chrome.tabs.onUpdated.removeListener(handleUpdate); // cleanup
+                    return;
                 }
             }
         }
     }
+
+    chrome.tabs.onUpdated.addListener(handleUpdate);
 });
