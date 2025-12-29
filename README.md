@@ -1,3 +1,5 @@
+Version: 1.0
+
 Current Functionality:
 * popup controls activation/deactivation of extension.
 * when the user tries to open a blacklisted site, it is automatically closed (existing blacklisted sites remain open until they are reloaded).
