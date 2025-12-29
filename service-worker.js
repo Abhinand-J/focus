@@ -20,8 +20,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 });
 
 // this will have to change. currently its onUpdated delete (for new tabs)
-// i would have it be onCreated -> onUpdated delete, and have another one be:
-// on 
+// i would have it be onCreated -> onUpdated delete
+// another listener would be onUpdated (or something to do with background tabs) redirect to block page
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (state && changeInfo.status === "complete") {
         for (const elem of blockList) {
