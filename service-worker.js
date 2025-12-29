@@ -8,30 +8,27 @@ let state = false;
 // map to store blocked tabids & urls
 const map = new Map();
 
-function setState(newState) {
-    state = !!newState;  // if undefined, !! will turn it to false (undef->true->false)
+const isBlacklisted = (url) => url && blockList.some(elem => url.includes(elem));
 
-    if (state) {
-        // if block: for each tab: if part of blacklist: add tabid, url to dict; redirect tab to block page
-        chrome.tabs.query({}, (tabs) => {
-            for (const tab of tabs) {
-                if (!tab.id || !tab.url) continue;
-                for (const elem of blockList) {
-                    if (tab.url.includes(elem)) {
-                        map.set(tab.id, tab.url);
-                        chrome.tabs.update(tab.id, {url: chrome.runtime.getURL('blocked.html')});
-                        break;
-                    }
-                }
+function block() {
+    chrome.tabs.query({}, (tabs) => {
+        for (const tab of tabs) {
+            if (tab.id && isBlacklisted(tab.url)) {
+                map.set(tab.id, tab.url);
+                chrome.tabs.update(tab.id, {url: chrome.runtime.getURL('blocked.html')});                    
+            }
+        }
+    });
+}
+function unblock() {
+    for (const [tabId, val] of map) {
+        chrome.tabs.get(tabId, () => {
+            if (!chrome.runtime.lastError) {
+                chrome.tabs.update(tabId, {url: val});
             }
         });
-    } else {
-        // if unblock: for each tabid, url in dict: redirect tab to url
-        for (const [key, val] of map) {
-            chrome.tabs.update(key, {url: val});
-        }
-        map.clear();
     }
+    map.clear();
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -39,7 +36,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse({value: state});
     }
     if (msg.type == "SET_STATE") {
-        setState(msg.value);
+        state = !!msg.value;
+        if (state) block();
+        else unblock();
     }
     if (msg.type == "GET_BLOCKLIST") {
         sendResponse({value: blockList});
@@ -48,40 +47,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type == "SET_BLOCKLIST" && msg.value) {
         console.log("here is where i would update blocklist");
         blockList = msg.value;
-        setState(state);
     }
 });
 
 // handles new tab creation. if tab url contains blacklisted strings, removes tab.
-chrome.tabs.onCreated.addListener((tab) => {
-    console.log(tab.id);  // somehow fixes issue ?
-    if (!state || !tab.id) return;
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (!state || !changeInfo.url) return;
 
-    const tabId = tab.id;
-
-    if (tab.url) {
-        for (const elem of blockList) {
-            if (tab.url.includes(elem)) {
-                chrome.tabs.remove(tabId);
-                return;
-            }
+    if (isBlacklisted(changeInfo.url)) {
+        if (map.has(tabId)) {
+            chrome.tabs.update(tabId, {url: chrome.runtime.getURL('blocked.html')});
+        } else {
+        chrome.tabs.remove(tabId);
         }
     }
-
-    function handleUpdate(updatedTabId, changeInfo) {
-        if (updatedTabId !== tabId) return; // ignore other tabs
-        if (changeInfo.url) {
-            for (const elem of blockList) {
-                if (changeInfo.url.includes(elem)) {
-                    chrome.tabs.remove(tabId);
-                    chrome.tabs.onUpdated.removeListener(handleUpdate); // cleanup
-                    return;
-                }
-            }
-        }
-    }
-
-    chrome.tabs.onUpdated.addListener(handleUpdate);
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {

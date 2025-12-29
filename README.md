@@ -8,6 +8,3 @@ Current Functionality:
     * activates/deactivates extension
     * allows user to update blocked sites (add/remove)
         * only the base list (stored in block-list.js) is maintained between sessions
-
-Known Bugs:
-* currently, accessing a blacklisted site from an unblocked tab is not handled.
