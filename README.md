@@ -1,4 +1,4 @@
-Version: 1.0
+Version: 1.1
 
 Current Functionality:
 * blocks existing webpages without deleting them (redirects to block page)
